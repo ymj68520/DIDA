@@ -3,3 +3,52 @@
 
 AGENTS.md
 CLAUDE.md
+
+# 敏感配置文件（包含密钥）
+config/trust_anchor.env
+config/contract.env
+config/cert_manifest.json
+
+# 密钥生成产物（绝对不能提交）
+scripts/keygen/*.txt
+scripts/keygen/*.pem
+scripts/keygen/*.der
+
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# Foundry
+contracts/target/
+contracts/cache/
+contracts/broadcast/
+contracts/out/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# 实验数据和日志
+results/
+logs/
+*.log
+*.pcap
+*.csv
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
