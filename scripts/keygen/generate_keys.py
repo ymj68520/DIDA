@@ -23,9 +23,10 @@ import os
 import sys
 from pathlib import Path
 from datetime import datetime
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ec as ec_crypto
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
+import secrets
 
 # 添加项目根目录到路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -39,25 +40,17 @@ def generate_secp256k1_keypair():
     Returns:
         tuple: (private_key_hex, public_key_hex)
     """
-    # 生成secp256k1私钥
-    private_key = ec.generate_private_key(ec.SECP256K1(), default_backend())
-    public_key = private_key.public_key()
+    # 生成32字节随机私钥
+    private_key_bytes = secrets.token_bytes(32)
+    sk_hex = "0x" + private_key_bytes.hex()
 
-    # 序列化私钥（32字节，十六进制）
-    private_key_bytes = private_key.private_bytes(
-        encoding=serialization.Encoding.DER,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
+    # 从私钥生成私钥对象
+    private_key = ec_crypto.derive_private_key(
+        int.from_bytes(private_key_bytes, 'big'),
+        ec_crypto.SECP256K1(),
+        default_backend()
     )
-    # 提取原始32字节私钥
-    # DER格式包含额外头部，我们需要提取原始私钥
-    from cryptography.hazmat.primitives.asymmetric import ec
-    private_value = private_key.private_bytes(
-        encoding=serialization.Encoding.Raw,
-        format=serialization.PrivateFormat.Raw,
-        encryption_algorithm=serialization.NoEncryption()
-    )
-    sk_hex = "0x" + private_value.hex()
+    public_key = private_key.public_key()
 
     # 序列化公钥（非压缩格式，65字节：0x04 + X + Y）
     public_key_bytes = public_key.public_bytes(

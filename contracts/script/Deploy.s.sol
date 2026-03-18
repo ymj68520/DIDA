@@ -8,7 +8,8 @@ contract DeployScript is Script {
     IPCertRegistry public registry;
 
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("SK_TOP");
+        // 使用Anvil的默认账户（私钥：0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80）
+        uint256 deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         vm.startBroadcast(deployerPrivateKey);
 
         // 部署合约

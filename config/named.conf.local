@@ -1,0 +1,14 @@
+
+// DIDA rDNS Zone Configuration
+// Generated at: 2026-03-18T18:28:10.834817
+
+zone "1.168.192.in-addr.arpa" {
+    type master;
+    file "/home/ymj68520/projects/Rust/Rust-rDNS/config/rdns.zone";
+};
+
+// 监听配置（添加到/etc/bind/named.conf.options）:
+// options {
+//     listen-on port 53 { 127.0.0.2; };
+//     allow-query { any; };
+// };
