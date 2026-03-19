@@ -169,12 +169,13 @@ fn verify_ip_in_prefix(ip: IpAddr, prefix: &ipnet::IpNet) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ipnet::Ipv4Net;
+    use ipnet::{IpNet, Ipv4Net};
     use std::net::Ipv4Addr;
 
     #[test]
     fn test_verify_ip_in_prefix() {
-        let prefix = Ipv4Net::new(Ipv4Addr::new(192, 168, 1, 0), 24).unwrap();
+        let prefix_v4 = Ipv4Net::new(Ipv4Addr::new(192, 168, 1, 0), 24).unwrap();
+        let prefix: IpNet = prefix_v4.into();
         let ip_in = IpAddr::V4(Ipv4Addr::new(192, 168, 1, 100));
         let ip_out = IpAddr::V4(Ipv4Addr::new(192, 168, 2, 100));
 

@@ -46,7 +46,7 @@ impl InflightTracker {
     /// 标记请求完成（移除追踪）
     pub async fn invalidate(&self, src_ip: IpAddr, dst_ip: IpAddr) {
         let key = (src_ip, dst_ip);
-        self.inner.invalidate(&key);
+        self.inner.invalidate(&key).await;
     }
 
     /// 检查是否在追踪中

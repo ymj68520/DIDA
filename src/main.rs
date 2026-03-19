@@ -20,6 +20,9 @@ mod cache;
 mod inflight;
 mod telemetry;
 mod pipeline;
+mod nfq;
+mod ws_listener;
+mod whitelist;
 
 use state::GatewayState;
 use pipeline::process_packet;
@@ -86,6 +89,12 @@ async fn main() -> Result<()> {
     info!("📋 配置: mode={}, queue_num={}, dns_cache={}",
         args.mode, args.queue_num, args.dns_cache);
 
+    // 打印线程配置信息
+    info!("🧵 线程配置: I/O隔离 + 计算隔离");
+    info!("   - I/O线程池: 处理nfq、DNS、RPC");
+    info!("   - 计算线程池: 处理ECDSA验签");
+    info!("   - 阻塞线程池: 处理文件I/O");
+
     // 加载网关状态
     let state = GatewayState::new(&args.config_dir, args.dns_cache, args.max_conns).await?;
 
@@ -139,13 +148,8 @@ async fn run_query_only_mode(state: std::sync::Arc<GatewayState>, queue_num: u16
 async fn run_full_mode(state: std::sync::Arc<GatewayState>, queue_num: u16) -> Result<()> {
     info!("🛡️  启动完整验证流水线");
 
-    // TODO: 实现nfq拦截 + 完整验证流水线
-    // 1. 拦截TCP SYN报文
-    // 2. DNS查询获取TxID + Sig_Sub
-    // 3. RPC查询获取Cert_IP + Sig_Top
-    // 4. V₁验证（PK_Top验Sig_Top）
-    // 5. V₂验证（PK_Sub验Sig_Sub）
-    // 6. 下发NF_ACCEPT或NF_DROP
+    // 使用nfq模块进行报文拦截和验证
+    nfq::start_nfq(state, queue_num).await?;
 
-    todo!("实现full模式");
+    Ok(())
 }

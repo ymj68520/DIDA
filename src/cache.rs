@@ -43,8 +43,8 @@ impl CertCache {
     }
 
     /// 使缓存记录失效
-    pub fn invalidate(&self, tx_id: &FixedBytes<32>) {
-        self.inner.invalidate(tx_id);
+    pub async fn invalidate(&self, tx_id: &FixedBytes<32>) {
+        self.inner.invalidate(tx_id).await;
     }
 
     /// 清空所有缓存

@@ -3,11 +3,14 @@
 
 AGENTS.md
 CLAUDE.md
+!README.md
+!docs/README.md
 
 # 敏感配置文件（包含密钥）
 config/trust_anchor.env
 config/contract.env
 config/cert_manifest.json
+config/whitelist.env
 
 # 密钥生成产物（绝对不能提交）
 scripts/keygen/*.txt

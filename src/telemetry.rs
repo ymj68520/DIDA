@@ -13,6 +13,10 @@ use std::time::Instant;
 #[derive(Debug, Clone)]
 pub struct PipelineTimer {
     start_time: Instant,
+    dns_end: Option<Instant>,
+    rpc_end: Option<Instant>,
+    v1_end: Option<Instant>,
+    v2_end: Option<Instant>,
 
     dns_duration: Option<std::time::Duration>,
     rpc_duration: Option<std::time::Duration>,
@@ -27,6 +31,10 @@ impl PipelineTimer {
     pub fn start() -> Self {
         Self {
             start_time: Instant::now(),
+            dns_end: None,
+            rpc_end: None,
+            v1_end: None,
+            v2_end: None,
             dns_duration: None,
             rpc_duration: None,
             v1_duration: None,
@@ -37,8 +45,8 @@ impl PipelineTimer {
 
     /// 记录DNS查询完成
     pub fn record_dns(&mut self) {
-        // 这个实现不完整，需要记录相对于start_time的时间差
-        // 实际实现中应该传入各个阶段的开始时间点
+        self.dns_end = Some(Instant::now());
+        self.dns_duration = Some(self.dns_end.unwrap() - self.start_time);
     }
 
     /// 记录缓存命中
@@ -48,17 +56,26 @@ impl PipelineTimer {
 
     /// 记录RPC查询完成
     pub fn record_rpc(&mut self) {
-        // TODO: 实现RPC时间记录
+        self.rpc_end = Some(Instant::now());
+        if let Some(dns_end) = self.dns_end {
+            self.rpc_duration = Some(self.rpc_end.unwrap() - dns_end);
+        }
     }
 
     /// 记录V₁验签完成
     pub fn record_v1(&mut self) {
-        // TODO: 实现V₁时间记录
+        self.v1_end = Some(Instant::now());
+        if let Some(rpc_end) = self.rpc_end {
+            self.v1_duration = Some(self.v1_end.unwrap() - rpc_end);
+        }
     }
 
     /// 记录V₂验签完成
     pub fn record_v2(&mut self) {
-        // TODO: 实现V₂时间记录
+        self.v2_end = Some(Instant::now());
+        if let Some(v1_end) = self.v1_end {
+            self.v2_duration = Some(self.v2_end.unwrap() - v1_end);
+        }
     }
 
     /// 记录总时延
