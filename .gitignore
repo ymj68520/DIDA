@@ -1,8 +1,10 @@
 .gitnexus
 .claude
+.trae
 
 AGENTS.md
 CLAUDE.md
+GEMINI.md
 !README.md
 !docs/README.md
 
