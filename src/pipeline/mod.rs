@@ -14,7 +14,6 @@ pub mod verdict;
 
 use std::sync::Arc;
 use std::net::IpAddr;
-use alloy::primitives::FixedBytes;
 use crate::state::GatewayState;
 use crate::telemetry::PipelineTimer;
 
@@ -33,7 +32,6 @@ pub async fn process_packet(
     dst_ip: IpAddr,
     src_ip: IpAddr,
 ) -> bool {
-    let timer = PipelineTimer::start();
 
     // ── In-Flight 去重（防 TCP 重传） ──────────────────────────
     if !state.inflight.try_insert(src_ip, dst_ip).await {
@@ -55,9 +53,6 @@ async fn process_inner(
     dst_ip: IpAddr,
     timer: &mut PipelineTimer,
 ) -> bool {
-    use crate::pipeline::chain::fetch_record;
-    use crate::pipeline::crypto::{verify_v1, verify_v2};
-    use crate::pipeline::dns::query_txt;
     // ── Step 1: 带外 DNS 查询（获取 TxID + Sig_Sub） ────────────
     let dns_result = tokio::time::timeout(
         state.dns_timeout,
@@ -114,7 +109,7 @@ async fn process_inner(
 
     // ── Step 3: V₁ 校验（用本地 PK_Top 验 Sig_Top） ─────────────
     let record_clone = chain_record.clone();
-    let pk_top_clone = state.pk_top.clone();
+    let pk_top_clone = state.pk_top;
     let dst_ip_clone = dst_ip;
 
     let v1_ok = tokio::task::spawn_blocking(move || {
@@ -131,7 +126,7 @@ async fn process_inner(
     tracing::debug!("✅ V₁验证通过");
 
     // ── Step 4: V₂ 校验（从 Cert_IP 提取 PK_Sub 验 Sig_Sub） ────
-    let pk_sub = chain_record.cert_ip.public_key.clone();
+    let pk_sub = chain_record.cert_ip.public_key;
 
     let v2_ok = tokio::task::spawn_blocking(move || {
         crypto::verify_v2(&pk_sub, &sig_sub, dst_ip_clone, tx_id)

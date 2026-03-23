@@ -137,10 +137,10 @@ fn compute_cert_ip_hash(cert_ip: &crate::state::CertIP) -> [u8; 32] {
     hasher.update(&pk_bytes);
 
     // 哈希过期时间
-    hasher.update(&cert_ip.expiration_timestamp.to_be_bytes());
+    hasher.update(cert_ip.expiration_timestamp.to_be_bytes());
 
     // 哈希吊销状态
-    hasher.update(&[if cert_ip.is_revoked { 1 } else { 0 }]);
+    hasher.update([if cert_ip.is_revoked { 1 } else { 0 }]);
 
     hasher.finalize().into()
 }
@@ -151,8 +151,8 @@ fn compute_ip_txid_hash(ip: IpAddr, tx_id: FixedBytes<32>) -> [u8; 32] {
 
     // 哈希IP地址
     match ip {
-        IpAddr::V4(addr) => hasher.update(&addr.octets()),
-        IpAddr::V6(addr) => hasher.update(&addr.octets()),
+        IpAddr::V4(addr) => hasher.update(addr.octets()),
+        IpAddr::V6(addr) => hasher.update(addr.octets()),
     }
 
     // 哈希TxID

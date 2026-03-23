@@ -29,19 +29,4 @@ pub async fn fetch_record(
     Err(color_eyre::eyre::eyre!("RPC call not implemented"))
 }
 
-/// 解析合约返回的ChainRecord
-///
-/// # Arguments
-/// * `raw_data` - 合约返回的原始数据
-///
-/// # Returns
-/// * `Ok(ChainRecord)` - 解析成功
-/// * `Err` - 解析失败
-fn parse_chain_record(raw_data: Vec<u8>) -> Result<ChainRecord, color_eyre::Report> {
-    // TODO: 实现ABI解码
-    // 需要解析：
-    // - CertIP结构（ipPrefix, publicKey, expiration, isRevoked）
-    // - sigTop（bytes）
 
-    Err(color_eyre::eyre::eyre!("ABI decoding not implemented"))
-}

@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
     println!("   超时: {}ms", args.timeout_ms);
     println!("   发送数据: {}", args.send_data);
     println!("   输出: {}", args.output);
-    println!("");
+    println!();
 
     // 统计计数器
     let success = Arc::new(AtomicU64::new(0));
@@ -132,7 +132,7 @@ async fn main() -> Result<()> {
                 // 第一个worker定期输出进度
                 if worker_id == 0 {
                     let elapsed = start_time.elapsed().as_secs();
-                    if elapsed > 0 && elapsed % 10 == 0 {
+                    if elapsed > 0 && elapsed.is_multiple_of(10) {
                         println!("   [Worker-0] 已运行 {}s，成功: {}", elapsed, local_success);
                     }
                 }
@@ -151,7 +151,7 @@ async fn main() -> Result<()> {
     }
 
     println!("✅ 压测完成");
-    println!("");
+    println!();
 
     // ── 统计分析 ───────────────────────────────────────────────
     let lats_snapshot = latencies.lock().await.clone();
@@ -192,16 +192,16 @@ async fn main() -> Result<()> {
         percentage(total_failure, total_attempts));
     println!("   ⏱️  超时:       {} ({:.1}%)", total_timeout,
         percentage(total_timeout, total_attempts));
-    println!("");
+    println!();
     println!("   吞吐量 (TPS):  {:.2}", tps);
-    println!("");
+    println!();
     println!("   时延统计:");
     println!("     平均值:      {:.2} ms", avg);
     println!("     P50:         {:.2} ms", p50);
     println!("     P95:         {:.2} ms", p95);
     println!("     P99:         {:.2} ms", p99);
     println!("═══════════════════════════════════════");
-    println!("");
+    println!();
 
     // ── 写入CSV ─────────────────────────────────────────────────
     if !lats_snapshot.is_empty() {
@@ -214,7 +214,7 @@ async fn main() -> Result<()> {
 
         // 写入时延数据
         let mut w = csv::Writer::from_path(&args.output)?;
-        w.write_record(&["latency_ms"])?;
+        w.write_record(["latency_ms"])?;
         for lat in &lats_snapshot {
             w.write_record(&[format!("{:.4}", lat)])?;
         }

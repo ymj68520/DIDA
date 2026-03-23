@@ -19,7 +19,7 @@ use once_cell::sync::Lazy;
 use tracing::{info, warn, debug};
 
 /// 白名单配置
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct WhitelistConfig {
     /// 精确IP地址白名单
     pub ips: Vec<IpAddr>,
@@ -29,15 +29,7 @@ pub struct WhitelistConfig {
     pub domains: Vec<String>,
 }
 
-impl Default for WhitelistConfig {
-    fn default() -> Self {
-        Self {
-            ips: vec![],
-            cidrs: vec![],
-            domains: vec![],
-        }
-    }
-}
+
 
 /// 全局白名单配置（单例）
 static WHITELIST: Lazy<Arc<WhitelistConfig>> = Lazy::new(|| {

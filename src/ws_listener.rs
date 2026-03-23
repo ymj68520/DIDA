@@ -11,7 +11,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
-use tracing::{info, warn, error, debug};
+use tracing::{info, debug};
 use color_eyre::Result;
 
 use crate::state::GatewayState;
@@ -69,7 +69,6 @@ impl WsListener {
 
         // 简化实现：定期模拟失效事件
         // 实际部署时应该使用WebSocket订阅区块链事件
-        let state_clone = self.state.clone();
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(60));
 

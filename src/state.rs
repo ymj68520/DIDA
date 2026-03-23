@@ -7,15 +7,12 @@
 //! - 配置参数
 
 use std::sync::Arc;
-use std::net::SocketAddr;
 use std::time::Duration;
 
-use alloy::primitives::{Address, FixedBytes};
-use alloy::providers::{Provider, ProviderBuilder};
-use alloy::transports::http::{Http, Client};
+use alloy::primitives::Address;
+use alloy::providers::ProviderBuilder;
 use hickory_resolver::TokioAsyncResolver;
 use k256::ecdsa::VerifyingKey;
-use moka::future::Cache;
 use ipnet::IpNet;
 
 use crate::cache::CertCache;
@@ -84,7 +81,7 @@ impl GatewayState {
     /// * `dns_server` - DNS服务器IP地址（可选）
     pub async fn new(
         config_dir: &str,
-        enable_dns_cache: bool,
+        _enable_dns_cache: bool,
         max_conns: usize,
         dns_server: Option<String>,
     ) -> Result<Arc<Self>, color_eyre::Report> {
@@ -98,10 +95,6 @@ impl GatewayState {
         let dns_resolver = Self::create_dns_resolver(dns_server.or(config_dns_server))?;
 
         // 4. 初始化RPC provider
-        let http_client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(5))
-            .build()?;
-
         let rpc_provider = ProviderBuilder::new().on_http(rpc_url.parse()?);
 
         // 5. 初始化缓存

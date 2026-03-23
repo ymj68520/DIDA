@@ -3,7 +3,7 @@
 //! 根据验证结果下发NF_ACCEPT或NF_DROP裁决。
 //! 与内核Netfilter队列交互。
 
-use nfq::{Queue, Verdict};
+use nfq::Queue;
 
 /// 裁决类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

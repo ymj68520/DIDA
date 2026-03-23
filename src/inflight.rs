@@ -3,7 +3,6 @@
 //! 防止TCP重传导致同一个 (src_ip, dst_ip) 被重复处理。
 //! 使用存在性集合（Set），值可以是空单元类型 ()。
 
-use std::sync::Arc;
 use std::net::IpAddr;
 use std::time::Duration;
 use moka::future::Cache;

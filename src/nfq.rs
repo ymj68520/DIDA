@@ -23,17 +23,17 @@ pub struct NfqConfig {
     /// Netfilter队列号
     pub queue_num: u16,
     /// 报文处理超时
-    pub packet_timeout: Duration,
+    pub _packet_timeout: Duration,
     /// CSV输出路径（None表示不输出CSV）
-    pub csv_output: Option<String>,
+    pub _csv_output: Option<String>,
 }
 
 impl Default for NfqConfig {
     fn default() -> Self {
         Self {
             queue_num: 0,
-            packet_timeout: Duration::from_secs(5),
-            csv_output: None,
+            _packet_timeout: Duration::from_secs(5),
+            _csv_output: None,
         }
     }
 }

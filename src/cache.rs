@@ -5,7 +5,6 @@
 //! - 基于容量的LRU淘汰
 //! - 异步刷新
 
-use std::hash::Hash;
 use std::sync::Arc;
 use moka::future::Cache;
 use alloy::primitives::FixedBytes;
@@ -58,7 +57,7 @@ impl CertCache {
         CacheStats {
             hit_count: 0, // moka cache doesn't expose hit/miss counts directly
             miss_count: 0,
-            total_count: entry_count as u64,
+            total_count: entry_count,
             hit_rate: 0.0,
         }
     }

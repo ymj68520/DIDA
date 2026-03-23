@@ -25,7 +25,6 @@ mod ws_listener;
 mod whitelist;
 
 use state::GatewayState;
-use pipeline::process_packet;
 
 /// DIDA认证网关命令行参数
 #[derive(Parser, Debug)]
@@ -134,7 +133,7 @@ async fn main() -> Result<()> {
 }
 
 /// Bypass模式：所有流量直通，不进行任何验证
-async fn run_bypass_mode(queue_num: u16) -> Result<()> {
+async fn run_bypass_mode(_queue_num: u16) -> Result<()> {
     info!("⚠️  警告：bypass模式不提供任何安全保护！");
 
     // TODO: 实现nfq直通逻辑
@@ -144,7 +143,7 @@ async fn run_bypass_mode(queue_num: u16) -> Result<()> {
 }
 
 /// Query-only模式：执行DNS和RPC查询，但不进行验证
-async fn run_query_only_mode(state: std::sync::Arc<GatewayState>, queue_num: u16) -> Result<()> {
+async fn run_query_only_mode(_state: std::sync::Arc<GatewayState>, _queue_num: u16) -> Result<()> {
     info!("📊 Query-only模式：将记录查询时延，但不进行验证");
 
     // TODO: 实现nfq拦截 + DNS/RPC查询逻辑
