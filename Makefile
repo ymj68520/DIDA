@@ -1,14 +1,25 @@
 # DIDA (Dual-Identity DNS-Anchored Authentication) - Makefile
 # 基于rDNS与联盟链的轻量级双重身份认证系统
 
+# ==============================================================================
+# 通用配置
+# ==============================================================================
+
+# 声明phony目标
 .PHONY: help setup verify-infra clean
-.PHONY: start-anvil deploy-contract provision-certs
+.PHONY: build test test-contracts lint
+.PHONY: start-anvil stop-anvil deploy-contract provision-certs
 .PHONY: start-bind9 stop-bind9
 .PHONY: setup-netem teardown-netem setup-nfqueue teardown-nfqueue
 .PHONY: run_exp1 run_exp2 run_exp3 run_exp4 run_exp5 plot
-.PHONY: build test lint
 
 # 默认目标
+.DEFAULT_GOAL := help
+
+# ==============================================================================
+# 帮助信息
+# ==============================================================================
+
 help:
 	@echo "DIDA 系统管理命令"
 	@echo ""
@@ -19,11 +30,13 @@ help:
 	@echo ""
 	@echo "开发构建:"
 	@echo "  make build           - 构建Rust网关"
-	@echo "  make test            - 运行所有测试"
+	@echo "  make test            - 运行Rust测试"
+	@echo "  make test-contracts  - 运行Solidity合约测试"
 	@echo "  make lint            - 运行clippy检查"
 	@echo ""
 	@echo "基础设施组件:"
 	@echo "  make start-anvil     - 启动Anvil区块链节点"
+	@echo "  make stop-anvil      - 停止Anvil区块链节点"
 	@echo "  make deploy-contract - 部署IPCertRegistry.sol合约"
 	@echo "  make provision-certs - 生成并注册测试证书"
 	@echo "  make start-bind9     - 启动BIND9 DNS服务器"
@@ -65,10 +78,10 @@ verify-infra:
 	@echo "检查Foundry工具链..."
 	@forge --version || (echo "❌ Foundry未安装"; exit 1)
 	@anvil --version || (echo "❌ Anvil未安装"; exit 1)
-	@echo "检查BIND9..."
-	@named -v || (echo "❌ BIND9未安装"; exit 1)
 	@echo "检查Python..."
 	@python3 --version || (echo "❌ Python3未安装"; exit 1)
+	@echo "检查树莓派DNS服务器连接..."
+	@ping -c 2 192.168.88.2 > /dev/null 2>&1 || (echo "⚠️  无法连接到树莓派，请检查网络连接"; exit 1)
 	@echo "✅ 所有依赖已安装"
 
 # ==============================================================================
@@ -101,18 +114,28 @@ start-anvil:
 	@if pgrep -x "anvil" > /dev/null; then \
 		echo "Anvil已在运行"; \
 	else \
+		mkdir -p logs \
 		anvil --block-time 0 --host 127.0.0.1 --port 8545 > logs/anvil.log 2>&1 & \
 		echo $$! > logs/anvil.pid; \
 		sleep 2; \
 		echo "Anvil已启动 (PID: $$(cat logs/anvil.pid))"; \
 	fi
 
+stop-anvil:
+	@echo "==> 停止Anvil节点..."
+	@if [ -f logs/anvil.pid ]; then \
+		kill $$(cat logs/anvil.pid) 2>/dev/null || true; \
+		rm logs/anvil.pid; \
+	fi
+	@pkill anvil || true
+	@echo "Anvil已停止"
+
 deploy-contract: start-anvil
 	@echo "==> 部署IPCertRegistry合约..."
 	cd contracts && forge script script/Deploy.s.sol \
 		--rpc-url http://127.0.0.1:8545 \
 		--broadcast \
-		--private-key $${SK_TOP:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80}
+		--private-key $${SK_TOP:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 	@echo "==> 合约部署完成，地址已记录"
 
 provision-certs:
@@ -121,21 +144,17 @@ provision-certs:
 	@echo "==> 证书生成完成"
 
 start-bind9:
-	@echo "==> 启动BIND9服务..."
-	@if pgrep -x "named" > /dev/null; then \
-		echo "BIND9已在运行"; \
-	else \
-		sudo systemctl start bind9 || sudo named -c /etc/bind/named.conf; \
-		sleep 1; \
-		echo "BIND9已启动"; \
-	fi
+	@echo "==> 启动BIND9服务（树莓派）..."
+	@echo "请在树莓派上执行: sudo systemctl start bind9"
+	@echo "或: sudo named -c /etc/bind/named.conf"
 	@echo "验证DNS解析..."
-	@dig @127.0.0.2 -p 53 100.1.168.192.in-addr.arpa TXT +short || echo "⚠️  DNS测试解析失败（可能尚未配置zone）"
+	@dig @192.168.88.2 -p 53 100.1.168.192.in-addr.arpa TXT +short || echo "⚠️  DNS测试解析失败（可能尚未配置zone或树莓派未启动）"
 
 stop-bind9:
-	@echo "==> 停止BIND9服务..."
-	sudo systemctl stop bind9 || sudo pkill named
-	@echo "BIND9已停止"
+	@echo "==> 停止BIND9服务（树莓派）..."
+	@echo "请在树莓派上执行: sudo systemctl stop bind9"
+	@echo "或: sudo pkill named"
+	@echo "BIND9已停止（请在树莓派上确认）"
 
 # ==============================================================================
 # 网络配置
@@ -209,12 +228,8 @@ plot:
 
 clean: teardown-netem teardown-nfqueue
 	@echo "==> 清理生成文件..."
-	@$(MAKE) -s stop-bind9
-	@if [ -f logs/anvil.pid ]; then \
-		kill $$(cat logs/anvil.pid) 2>/dev/null || true; \
-		rm logs/anvil.pid; \
-	fi
-	@pkill anvil || true
+	@echo "请在树莓派上停止BIND9服务（如果需要）"
+	@$(MAKE) -s stop-anvil
 	cargo clean
 	cd contracts && forge clean
 	@echo "==> 清理完成"
