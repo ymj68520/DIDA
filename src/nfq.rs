@@ -9,10 +9,14 @@
 use std::sync::Arc;
 use std::net::IpAddr;
 use std::time::Duration;
-use nfq::{Queue, Verdict, Message};
 use tokio::signal;
 use tracing::{info, error, warn, debug};
 use color_eyre::Result;
+
+// 重新导出nfq库的类型
+pub use nfq::Queue;
+pub use nfq::Verdict;
+pub use nfq::Message;
 
 use crate::pipeline::process_packet;
 use crate::state::GatewayState;
@@ -152,7 +156,7 @@ pub async fn run_nfq_loop(
 /// # Returns
 /// * `Some((src_ip, dst_ip))` - 成功提取
 /// * `None` - 提取失败
-fn extract_ips(msg: &Message) -> Option<(IpAddr, IpAddr)> {
+pub fn extract_ips(msg: &Message) -> Option<(IpAddr, IpAddr)> {
     use pnet::packet::ipv4::Ipv4Packet;
 
     // 获取报文数据

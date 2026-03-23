@@ -57,6 +57,14 @@ pnet = { version = "0.35.0", features = ["std"] }
 thiserror = "2.0.18"
 csv = "1.4.0"
 
+# XDP/eBPF support
+aya = { version = "0.11", optional = true, features = ["tokio"] }
+libbpf-rs = { version = "0.21", optional = true }
+memmap2 = { version = "0.9", optional = true }
+
+[features]
+xdp = ["dep:aya", "dep:libbpf-rs", "dep:memmap2"]
+
 [dev-dependencies]
 criterion = "0.5"
 

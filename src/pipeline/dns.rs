@@ -70,9 +70,14 @@ pub async fn query_txt(
 ///
 /// # Example
 /// ```
-/// assert_eq!(reverse_dns_name("192.168.1.100"), Ok("100.1.168.192.in-addr.arpa".to_string()));
+/// use std::net::IpAddr;
+/// use rust_rdns::pipeline::dns::reverse_dns_name;
+/// let ip: IpAddr = "192.168.1.100".parse().unwrap();
+/// let result = reverse_dns_name(ip);
+/// assert!(result.is_ok());
+/// assert_eq!(result.unwrap(), "100.1.168.192.in-addr.arpa".to_string());
 /// ```
-fn reverse_dns_name(ip: IpAddr) -> Result<String, color_eyre::Report> {
+pub fn reverse_dns_name(ip: IpAddr) -> Result<String, color_eyre::Report> {
     match ip {
         IpAddr::V4(addr) => {
             let octets = addr.octets();
