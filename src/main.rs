@@ -57,6 +57,10 @@ struct Args {
     /// 最大并发连接数
     #[arg(long, default_value_t = 10000)]
     max_conns: usize,
+
+    /// DNS服务器IP地址
+    #[arg(long, default_value = "")]
+    dns_server: String,
 }
 
 #[tokio::main]
@@ -96,7 +100,12 @@ async fn main() -> Result<()> {
     info!("   - 阻塞线程池: 处理文件I/O");
 
     // 加载网关状态
-    let state = GatewayState::new(&args.config_dir, args.dns_cache, args.max_conns).await?;
+    let state = GatewayState::new(
+        &args.config_dir, 
+        args.dns_cache, 
+        args.max_conns,
+        if args.dns_server.is_empty() { None } else { Some(args.dns_server) }
+    ).await?;
 
     info!("✅ 网关状态初始化完成");
     info!("🔐 PK_Top已加载");

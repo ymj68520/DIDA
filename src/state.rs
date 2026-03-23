@@ -81,20 +81,21 @@ impl GatewayState {
     /// * `config_dir` - 配置文件目录
     /// * `enable_dns_cache` - 是否启用DNS缓存
     /// * `max_conns` - 最大并发连接数
+    /// * `dns_server` - DNS服务器IP地址（可选）
     pub async fn new(
         config_dir: &str,
         enable_dns_cache: bool,
         max_conns: usize,
+        dns_server: Option<String>,
     ) -> Result<Arc<Self>, color_eyre::Report> {
         // 1. 加载PK_Top（本地预置，不依赖网络）
         let pk_top = Self::load_pk_top(config_dir)?;
 
         // 2. 加载合约配置
-        let (contract_address, rpc_url) = Self::load_contract_config(config_dir)?;
+        let (contract_address, rpc_url, config_dns_server) = Self::load_contract_config(config_dir)?;
 
         // 3. 初始化DNS resolver
-        let dns_resolver = TokioAsyncResolver::tokio_from_system_conf()
-            .map_err(|e| color_eyre::eyre::eyre!("Failed to create DNS resolver: {}", e))?;
+        let dns_resolver = Self::create_dns_resolver(dns_server.or(config_dns_server))?;
 
         // 4. 初始化RPC provider
         let http_client = reqwest::Client::builder()
@@ -121,6 +122,35 @@ impl GatewayState {
         };
 
         Ok(Arc::new(state))
+    }
+
+    /// 创建DNS解析器
+    fn create_dns_resolver(dns_server: Option<String>) -> Result<TokioAsyncResolver, color_eyre::Report> {
+        use hickory_resolver::config::{ResolverConfig, ResolverOpts};
+        
+        match dns_server {
+            Some(server) => {
+                // 创建自定义DNS配置，指向树莓派IP
+                let mut config = ResolverConfig::new();
+                let socket_addr = format!("{}:53", server).parse()
+                    .map_err(|e| color_eyre::eyre::eyre!("Invalid DNS server address: {}", e))?;
+                
+                config.add_name_server(hickory_resolver::config::NameServerConfig {
+                    socket_addr,
+                    protocol: hickory_resolver::config::Protocol::Udp,
+                    tls_dns_name: None,
+                    trust_negative_responses: false,
+                    bind_addr: None,
+                });
+                
+                let opts = ResolverOpts::default();
+                Ok(TokioAsyncResolver::tokio(config, opts))
+            }
+            None => {
+                // 使用系统配置（向后兼容）
+                Ok(TokioAsyncResolver::tokio_from_system_conf()?)
+            }
+        }
     }
 
     /// 从配置文件加载PK_Top
@@ -161,7 +191,7 @@ impl GatewayState {
     }
 
     /// 从配置文件加载合约配置
-    fn load_contract_config(config_dir: &str) -> Result<(Address, String), color_eyre::Report> {
+    fn load_contract_config(config_dir: &str) -> Result<(Address, String, Option<String>), color_eyre::Report> {
         use std::fs;
         use std::path::Path;
 
@@ -177,6 +207,7 @@ impl GatewayState {
         let contents = fs::read_to_string(contract_env)?;
         let mut contract_addr = None;
         let mut rpc_url = None;
+        let mut dns_server = None;
 
         for line in contents.lines() {
             let line = line.trim();
@@ -193,6 +224,9 @@ impl GatewayState {
                     "RPC_URL" => {
                         rpc_url = Some(value.trim().to_string());
                     }
+                    "DNS_SERVER" => {
+                        dns_server = Some(value.trim().to_string());
+                    }
                     _ => {}
                 }
             }
@@ -203,8 +237,12 @@ impl GatewayState {
 
         let rpc_url = rpc_url.unwrap_or_else(|| "http://127.0.0.1:8545".to_string());
 
-        tracing::info!("✅ 合约配置已加载: {} @ {}", contract_address, rpc_url);
+        if let Some(dns) = &dns_server {
+            tracing::info!("✅ 合约配置已加载: {} @ {} (DNS: {})", contract_address, rpc_url, dns);
+        } else {
+            tracing::info!("✅ 合约配置已加载: {} @ {}", contract_address, rpc_url);
+        }
 
-        Ok((contract_address, rpc_url))
+        Ok((contract_address, rpc_url, dns_server))
     }
 }
